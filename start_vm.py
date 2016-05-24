@@ -5,17 +5,15 @@ import os
 import getopt
 import socket
 
-template_file = "centos7.xml"
-template_attach_file = "attach_template.xml"
 host_name = socket.gethostname()
-
+ip_addr = socket.gethostbyname(socket.gethostname())
 
 def createVirtXml(special_id):
     """
     :param special_id:
     :return: volume_name
     """
-    # TODO: create a volume first
+    # create a volume first
     volume_name = host_name+"_"+str(special_id)
     createBootVolume(volume_name)
     # write a virsh create xml file
@@ -46,19 +44,22 @@ def createVirtXml(special_id):
             <source protocol ="boss" name="boss:pool_cinder/{1}" />
             <target dev="vda" bus="virtio" />
         </disk>
+        <interface type='network'>
+            <source network='default'/>
+        </interface>
         <input type="mouse" bus="ps2" />
+        <graphics type="vnc" port="{2}" autoport="no" listen="{3}" keymap="en-us" />
     </devices>
 </domain>
-    """.format(volume_name, volume_name)
+    """.format(volume_name, volume_name, 5900+special_id, ip_addr)
     f2.write(xml_content)
     return volume_name
 
 
 def createAttachXml(volume_name):
-    # TODO
     file_name = volume_name+"_attach.xml"
     f2 = open(file_name, 'w')
-    xml_content = """<disk type='file' device='disk'>
+    xml_content = """<disk type='network' device='disk'>
    <driver name='qemu' type='raw' cache='none'/>
    <source file='boss:pool_cinder/{0}'/>
    <target dev='vdb'/>
@@ -70,29 +71,27 @@ def createAttachXml(volume_name):
 
 def createBlankVolume(vm_name):
     volume_name = vm_name+"_blank_volume"
-    # os.system("volume_create -p pool_cinder -v "+volume_name+" -s 20G")
-    # TODO: error handling
+    os.system("volume_create -p pool_cinder -v "+volume_name+" -s 20G")
     return volume_name
 
 
 def createBootVolume(volume_name):
-    pass
-    # os.system("volume_copy -sp pool_cinder -sv centos7 -dp pool_cinder -dv "+volume_name)
+    # TODO: change centos7 to a valid volume name
+    os.system("volume_copy -sp pool_cinder -sv centos7 -dp pool_cinder -dv "+volume_name)
 
 
 def startVm(num_vm):
-    # TODO
     for i in xrange(num_vm):
         volume_name = createVirtXml(i)
-        # os.system("virsh create "+volume_name+".xml")
-        # TODO: attack blank volume
+        os.system("virsh create "+volume_name+".xml")
+        # attack blank volume
         """
         first step: create a blank volume
         second step: virsh attach (? need xml)
         """
         blank_volume_name = createBlankVolume(volume_name)
         attach_filename = createAttachXml(blank_volume_name)
-        # os.system("virsh attach "+attach_filename)
+        os.system("virsh attach-device "+volume_name+" "+attach_filename)
 
 
 def main(argv):
