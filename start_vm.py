@@ -8,6 +8,7 @@ import socket
 host_name = socket.gethostname()
 ip_addr = socket.gethostbyname(socket.gethostname())
 
+
 def createVirtXml(special_id):
     """
     :param special_id:
@@ -80,7 +81,19 @@ def createBootVolume(volume_name):
     os.system("volume_copy -sp pool_cinder -sv centos7 -dp pool_cinder -dv "+volume_name)
 
 
+def cleanUp():
+    """
+    first: virsh destroy all vms start with hostname
+    second: volume_delete all volumes start with hostname
+    maybe will use xargs
+    :return:
+    """
+    # TODO
+    pass
+
+
 def startVm(num_vm):
+    cleanUp()
     for i in xrange(num_vm):
         volume_name = createVirtXml(i)
         os.system("virsh create "+volume_name+".xml")
