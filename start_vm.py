@@ -61,10 +61,10 @@ def createVirtXml(special_id):
 def createAttachXml(volume_name):
     file_name = volume_name+"_attach.xml"
     f2 = open(file_name, 'w')
-    xml_content = """<disk type='network' device='disk'>
-   <driver name='qemu' type='raw' cache='none'/>
-   <source file='boss:{1}/{0}'/>
-   <target dev='vdb'/>
+    xml_content = """<disk type="network" device="disk">
+   <driver name="qemu" type="raw" />
+   <source protocol="boss" name="boss:{1}/{0}" />
+   <target dev="vdc" bus="virtio"/>
 </disk>
 """.format(volume_name, pool_name)
     f2.write(xml_content)
@@ -74,7 +74,7 @@ def createAttachXml(volume_name):
 
 def createBlankVolume(vm_name):
     volume_name = vm_name+"_blank_volume"
-    os.system("volume_create -p " + pool_name + "-v "+volume_name+" -s 20G")
+    os.system("volume_create -p " + pool_name + " -v "+volume_name+" -s 20G")
     return volume_name
 
 
