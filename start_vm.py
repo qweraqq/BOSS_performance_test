@@ -7,7 +7,7 @@ import socket
 
 host_name = socket.gethostname()
 ip_addr = socket.gethostbyname(socket.gethostname())
-
+pool_name = 'p1'
 
 def createVirtXml(special_id):
     """
@@ -42,7 +42,7 @@ def createVirtXml(special_id):
     <devices>
         <disk type="network" device="disk">
             <driver name="qemu" type="raw" />
-            <source protocol ="boss" name="boss:pool_cinder/{1}" />
+            <source protocol ="boss" name="boss:{4}/{1}" />
             <target dev="vda" bus="virtio" />
         </disk>
         <interface type='network'>
@@ -52,7 +52,7 @@ def createVirtXml(special_id):
         <graphics type="vnc" port="{2}" autoport="no" listen="{3}" keymap="en-us" />
     </devices>
 </domain>
-    """.format(volume_name, volume_name, 5900+special_id, ip_addr)
+    """.format(volume_name, volume_name, 5900+special_id, ip_addr, pool_name)
     f2.write(xml_content)
     f2.close()
     return volume_name
@@ -63,10 +63,10 @@ def createAttachXml(volume_name):
     f2 = open(file_name, 'w')
     xml_content = """<disk type='network' device='disk'>
    <driver name='qemu' type='raw' cache='none'/>
-   <source file='boss:pool_cinder/{0}'/>
+   <source file='boss:{1}/{0}'/>
    <target dev='vdb'/>
 </disk>
-""".format(volume_name)
+""".format(volume_name, pool_name)
     f2.write(xml_content)
     f2.close()
     return file_name
@@ -74,13 +74,13 @@ def createAttachXml(volume_name):
 
 def createBlankVolume(vm_name):
     volume_name = vm_name+"_blank_volume"
-    os.system("volume_create -p pool_cinder -v "+volume_name+" -s 20G")
+    os.system("volume_create -p " + pool_name + "-v "+volume_name+" -s 20G")
     return volume_name
 
 
 def createBootVolume(volume_name):
     # TODO: change centos7 to a valid volume name
-    os.system("volume_copy -sp pool_cinder -sv centos7 -dp pool_cinder -dv "+volume_name)
+    os.system("volume_copy -sp " + pool_name + " -sv centos7 -dp " + pool_name + " -dv "+volume_name)
 
 
 def cleanUp():
@@ -91,7 +91,12 @@ def cleanUp():
     :return:
     """
     # TODO
-    pass
+    os.system("virsh list | grep " +  host_name +
+              " | awk '{print $2}' | xargs -n 1 virsh destroy")
+    os.system("volume_list -p p1 | grep " + host_name +
+              "| awk '{print $7}' | xargs -n 1 volume_delete -p " + pool_name + " -v")
+
+
 
 
 def startVm(num_vm):
