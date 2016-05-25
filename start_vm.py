@@ -22,7 +22,7 @@ def createVirtXml(special_id):
     f2 = open(file_name, 'w')
     xml_content = """<domain type="kvm">
     <name>{0}</name>
-    <memory unit="MiB"1024</memory>
+    <memory unit="MiB">1024</memory>
     <currentMemory unit="MiB">1024</currentMemory>
     <vcpu>1</vcpu>
     <os>
