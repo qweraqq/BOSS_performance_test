@@ -54,6 +54,7 @@ def createVirtXml(special_id):
 </domain>
     """.format(volume_name, volume_name, 5900+special_id, ip_addr)
     f2.write(xml_content)
+    f2.close()
     return volume_name
 
 
@@ -67,6 +68,7 @@ def createAttachXml(volume_name):
 </disk>
 """.format(volume_name)
     f2.write(xml_content)
+    f2.close()
     return file_name
 
 
