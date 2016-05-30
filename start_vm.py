@@ -7,7 +7,8 @@ import socket
 
 host_name = socket.gethostname()
 ip_addr = socket.gethostbyname(socket.gethostname())
-pool_name = 'p1'
+pool_name = 'pool_cinder'
+snap_name = 'centos7.snap.ok'
 
 def createVirtXml(special_id):
     """
@@ -24,7 +25,7 @@ def createVirtXml(special_id):
     <name>{0}</name>
     <memory unit="MiB">1024</memory>
     <currentMemory unit="MiB">1024</currentMemory>
-    <vcpu>1</vcpu>
+    <vcpu placement='static'>2</vcpu>
     <os>
         <type arch="x86_64" machine="pc">hvm</type>
         <boot dev="hd" />
@@ -47,12 +48,13 @@ def createVirtXml(special_id):
         </disk>
         <interface type='network'>
             <source network='default'/>
+            <model type='virtio'/>
         </interface>
         <input type="mouse" bus="ps2" />
         <graphics type="vnc" port="{2}" autoport="no" listen="{3}" keymap="en-us" />
     </devices>
 </domain>
-    """.format(volume_name, volume_name, 5900+special_id, ip_addr, pool_name)
+    """.format(volume_name, volume_name, 5901+special_id, ip_addr, pool_name)
     f2.write(xml_content)
     f2.close()
     return volume_name
@@ -64,7 +66,7 @@ def createAttachXml(volume_name):
     xml_content = """<disk type="network" device="disk">
    <driver name="qemu" type="raw" />
    <source protocol="boss" name="boss:{1}/{0}" />
-   <target dev="vdc" bus="virtio"/>
+   <target dev="vdb" bus="virtio"/>
 </disk>
 """.format(volume_name, pool_name)
     f2.write(xml_content)
@@ -74,13 +76,13 @@ def createAttachXml(volume_name):
 
 def createBlankVolume(vm_name):
     volume_name = vm_name+"_blank_volume"
-    os.system("volume_create -p " + pool_name + " -v "+volume_name+" -s 20G")
+    os.system("volume_create -p " + pool_name + " -v "+volume_name+" -s 50G")
     return volume_name
 
 
 def createBootVolume(volume_name):
     # TODO: change centos7 to a valid volume name
-    os.system("volume_copy -sp " + pool_name + " -sv centos7 -dp " + pool_name + " -dv "+volume_name)
+    os.system("snap_clone -p " + pool_name + " -s " + snap_name + " -v "+volume_name)
 
 
 def cleanUp():
@@ -91,12 +93,10 @@ def cleanUp():
     :return:
     """
     # TODO
-    os.system("virsh list | grep " +  host_name +
+    os.system("virsh list | grep " + host_name +
               " | awk '{print $2}' | xargs -n 1 virsh destroy")
-    os.system("volume_list -p p1 | grep " + host_name +
+    os.system("volume_list -p " + pool_name + " | grep " + host_name +
               "| awk '{print $7}' | xargs -n 1 volume_delete -p " + pool_name + " -v")
-
-
 
 
 def startVm(num_vm):
