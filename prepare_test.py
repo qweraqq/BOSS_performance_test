@@ -68,7 +68,7 @@ def ddThread(ip):
 def main(argv):
     dd_sig = 0
     try:
-        opts, args = getopt.getopt(argv, "hn:w:")
+        opts, args = getopt.getopt(argv, "hw:")
     except getopt.GetoptError:
         print 'usage:prepare_test -w <dd_signal>'
         sys.exit(2)
